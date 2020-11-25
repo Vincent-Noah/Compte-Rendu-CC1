@@ -29,7 +29,6 @@ BiocManager::install("dada2", version = "3.11")
 BiocManager::install("phyloseq", version = "3.11")
 ```
 
-
 # Installation de packages pour phyloseq.
 
 ## Installation de phangorn.
@@ -52,7 +51,6 @@ BiocManager::install("DECIPHER")
 install.packages("gridExtra")
 ```
 
-
 # Exemple de construction de data.frame à partir d'informations encodées dans les noms de fichiers.
 
 ```{r}
@@ -66,7 +64,6 @@ samdf$When <- "Early"
 samdf$When[samdf$Day>100] <- "Late"
 rownames(samdf) <- samples.out
 ```
-
 
 # Construction de l'arbre à partir des données de dada2 (phyloseq)
 
@@ -86,7 +83,6 @@ fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
         rearrangement = "stochastic", control = pml.control(trace = 0))
 detach("package:phangorn", unload=TRUE)
 ```
-
 
 # Installation de packages pour des analyses complémentaires sur phyloseq.
 
