@@ -1,6 +1,5 @@
 ---
-title: "metabarcoding with dada2: environment installation"
-
+title: "Analyse statistique via phyloseq"
 ---
 # Mise a jour de la configuration de la machine virtuelle.
 
@@ -10,12 +9,12 @@ sudo apt-get install -y libbz2-dev
 sudo apt-get install -y liblzma-dev
 ```
 
-#Installation des DADA2 et de Phyloseq.
+# Installation des DADA2 et de Phyloseq.
 
 A partir des instructions https://benjjneb.github.io/dada2/dada-installation.html
 
 
-##Installation de DADA2 via BiocManager
+## Installation de DADA2 via BiocManager
 
 ```{r package install}
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -31,32 +30,30 @@ BiocManager::install("phyloseq", version = "3.11")
 ```
 
 
+# Installation de packages pour phyloseq.
 
-#Installation de packages pour phyloseq.
-
-##Installation de phangorn.
+## Installation de phangorn.
 
 ```{r}
 BiocManager::install("phangorn")
 ```
 
 
-##Installation de DECIPHER.
+## Installation de DECIPHER.
 
 ```{r}
 BiocManager::install("DECIPHER")
 ```
 
 
-##Installation de gridExtra
+## Installation de gridExtra
 
 ```{r}
 install.packages("gridExtra")
 ```
 
 
-
-#Exemple de construction de data.frame à partir d'informations encodées dans les noms de fichiers.
+# Exemple de construction de data.frame à partir d'informations encodées dans les noms de fichiers.
 
 ```{r}
 samples.out <- rownames(seqtab.nochim)
@@ -71,7 +68,7 @@ rownames(samdf) <- samples.out
 ```
 
 
-#Construction de l'arbre à partir des données de dada2 (phyloseq)
+# Construction de l'arbre à partir des données de dada2 (phyloseq)
 
 ```{r}
 library(phangorn)
@@ -92,8 +89,7 @@ detach("package:phangorn", unload=TRUE)
 
 
 
-#Installation de packages pour des analyses complémentaires sur phyloseq.
-
+# Installation de packages pour des analyses complémentaires sur phyloseq.
 
 ```{r}
 .cran_packages <- c( "shiny","miniUI", "caret", "pls", "e1071", "ggplot2", "randomForest", "dplyr", "ggrepel", "nlme", "devtools",
@@ -108,8 +104,3 @@ install.packages(.cran_packages)
 devtools::install_github(.github_packages)
 BiocManager::install(.bioc_packages)                         
 ```
-
-
-
-
-
