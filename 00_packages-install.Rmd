@@ -2,42 +2,61 @@
 title: "metabarcoding with dada2: environment installation"
 output: html_notebook
 ---
-# update VM configuration
+# Mettre à jour la configuration de la machine virtuelle.
+
 ``` {bash}
 sudo apt-get update -y 
 sudo apt-get install -y libbz2-dev
 sudo apt-get install -y liblzma-dev
 ```
-#package install
-Following instruction on https://benjjneb.github.io/dada2/dada-installation.html
+
+#Installation des DADA2 et de Phyloseq.
+
+A partir des instructions https://benjjneb.github.io/dada2/dada-installation.html
+
+##Installation de DADA2 via BiocManager
+
 ```{r package install}
 if (!requireNamespace("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 BiocManager::install(version = '3.11')
 BiocManager::install("dada2", version = "3.11")
+```
+
+## Installation de Phyloseq
+
+```{r}
 BiocManager::install("phyloseq", version = "3.11")
 ```
 
-#Installation de phangorn
+
+
+
+#Installation de packages pour phyloseq.
+
+##Installation de phangorn.
 
 ```{r}
 BiocManager::install("phangorn")
 ```
 
 
-#Installation de DECIPHER
+##Installation de DECIPHER.
 
 ```{r}
 BiocManager::install("DECIPHER")
 ```
 
-#Installation de gridExtra
+
+##Installation de gridExtra
 
 ```{r}
 install.packages("gridExtra")
 ```
 
-#Je sais pas
+
+
+#Exemple de construction de data.frame à partir d'informations encodées dans les noms de fichiers.
 
 ```{r}
 samples.out <- rownames(seqtab.nochim)
@@ -52,7 +71,7 @@ rownames(samdf) <- samples.out
 ```
 
 
-#Construction de l'arbre
+#Construction de l'arbre à partir des données de dada2 (phyloseq)
 
 ```{r}
 library(phangorn)
@@ -70,17 +89,10 @@ fitGTR <- optim.pml(fitGTR, model="GTR", optInv=TRUE, optGamma=TRUE,
         rearrangement = "stochastic", control = pml.control(trace = 0))
 detach("package:phangorn", unload=TRUE)
 ```
-```{r}
-ps_connect <-url("https://raw.githubusercontent.com/spholmes/F1000_workflow/master/data/ps.rds")
-ps = readRDS(ps_connect)
-ps
-```
 
 
 
-
-
-
+#Installation de packages pour des analyses complémentaires sur phyloseq.
 
 
 ```{r}
@@ -90,11 +102,6 @@ ps
 .github_packages <- c("jfukuyama/phyloseqGraphTest")
 .bioc_packages <- c("genefilter", "impute")
 ```
-
-
-
-
-
 
 ```{r}
 install.packages(.cran_packages)
