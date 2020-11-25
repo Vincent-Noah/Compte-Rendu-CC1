@@ -1,6 +1,5 @@
 ---
 title: "metabarcoding with dada2: environment installation"
-output: html_notebook
 ---
 # Mettre à jour la configuration de la machine virtuelle.
 
