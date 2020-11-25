@@ -88,7 +88,6 @@ detach("package:phangorn", unload=TRUE)
 ```
 
 
-
 # Installation de packages pour des analyses complémentaires sur phyloseq.
 
 ```{r}
