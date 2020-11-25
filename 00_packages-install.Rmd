@@ -14,7 +14,7 @@ sudo apt-get install -y liblzma-dev
 A partir des instructions https://benjjneb.github.io/dada2/dada-installation.html
 
 
-## Installation de DADA2 via BiocManager
+## Installation de DADA2 via BiocManager.
 
 ```{r package install}
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -23,7 +23,7 @@ BiocManager::install(version = '3.11')
 BiocManager::install("dada2", version = "3.11")
 ```
 
-## Installation de Phyloseq via BiocManager
+## Installation de Phyloseq via BiocManager.
 
 ```{r}
 BiocManager::install("phyloseq", version = "3.11")
