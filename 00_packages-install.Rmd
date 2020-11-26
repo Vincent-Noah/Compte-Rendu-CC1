@@ -1,12 +1,14 @@
 ---
-title: <font size="6"> <span style="color:Red">*Script d'installation de tous les packages.*</span> </font>
-output:  
-  github_document:
+title: \textcolor{purple}{Script d’installation de tous les packages.} 
+Auteur: "Vincent Noah"
+Date: "26/11/2020"
+output:
+  pdf_document:
     toc: true
     toc_depth: 2
 ---
- 
-# <font size="4"> <span style="color:Red">*Mise à jour de la machine virtuelle.*</span> </font>
+
+# \textcolor{red}{Mise à jour de la machine virtuelle.}  
 
 ``` {bash, results="hide"}
 sudo apt-get update -y 
@@ -14,11 +16,12 @@ sudo apt-get install -y libbz2-dev
 sudo apt-get install -y liblzma-dev
 ```
 
-# <font size="4"> <span style="color:Red">*Installation de DADA2 et de Phyloseq avec BiocManager.*</span> </font>
+
+# \textcolor{red}{Installation de Dada2 et de Phyloseq avec BiocManager.}
 
 A partir des instructions https://benjjneb.github.io/dada2/dada-installation.html
 
-## <font size="3"> <span style="color:green">*Installation de BiocManager.*</span> </font>
+## \textcolor{blue}{Installation de BiocManager.}
 
 ```{r package install, results="hide", message=FALSE}
 if (!requireNamespace("BiocManager", quietly = TRUE))
@@ -26,43 +29,41 @@ if (!requireNamespace("BiocManager", quietly = TRUE))
 BiocManager::install(version = '3.11')
 ```
 
-##  <font size="3"> <span style="color:green">*Installation de DADA2.*</span> </font>
+## \textcolor{blue}{Installation de Dada2.}
 
 ```{r, results="hide", message=FALSE}
 BiocManager::install("dada2", version = "3.11")
 ```
 
-## <font size="3"> <span style="color:green">*Installation de Phyloseq.*</span> </font>
+## \textcolor{blue}{Installation de Phyloseq.}
 
 ```{r, results="hide", message=FALSE}
 BiocManager::install("phyloseq", version = "3.11")
 ```
 
 
-# <font size="4"> <span style="color:Red">*Installation de packages pour phyloseq.*</span> </font>
+# \textcolor{red}{Installation de packages pour phyloseq.}
 
-
-## <font size="3"> <span style="color:green">*Installation de phangorn.*</span> </font>
+## \textcolor{blue}{Installation de phangorn.}
 
 ```{r, results="hide", message=FALSE}
 BiocManager::install("phangorn")
 ```
 
-## <font size="3"> <span style="color:green">*Installation de DECIPHER.*</span> </font>
+## \textcolor{blue}{Installation de DECIPHER.}
 
 ```{r, results="hide", message=FALSE}
 BiocManager::install("DECIPHER")
 ```
 
-## <font size="3"> <span style="color:green">*Installation de gridExtra.*</span> </font>
+## \textcolor{blue}{Installation de gridExtra}
 
 ```{r, results="hide", message=FALSE}
 install.packages("gridExtra")
 ```
 
 
-# <font size="4"> <span style="color:Red">*Installation de packages pour des analyses complémentaires sur phyloseq.*</span> </font>
-
+# \textcolor{red}{Installation de packages pour des analyses complémentaires sur phyloseq.}
 
 ```{r, results="hide", message=FALSE, warning=FALSE}
 .cran_packages <- c( "shiny","miniUI", "caret", "pls", "e1071", "ggplot2", "randomForest", "dplyr", "ggrepel", "nlme", "devtools",
@@ -75,5 +76,5 @@ install.packages("gridExtra")
 ```{r, results="hide", message=FALSE, warning=FALSE}
 install.packages(.cran_packages)
 devtools::install_github(.github_packages)
-BiocManager::install(.bioc_packages)                         
+BiocManager::install(.bioc_packages)                        
 ```
