@@ -1,14 +1,25 @@
 ---
-title: "01_data-import"
+title: \textcolor{purple}{Script d'importation des donées.}  
+author: Vincent Noah
+date: "26 novembre 2020"
 output:
-  html_document:
-    df_print: paged
+  pdf_document:
+    toc: true
+    toc_depth: 2
 ---
-# Downloading the Standard Operating Procedure example data
-```{bash}
+ 
+# \textcolor{red}{Téléchargement d'un exemple de jeu de données à analyser.}
+
+Téléchargement du dossier .zip à partir d'un lien.
+
+```{bash, results="hide"}
 wget https://mothur.s3.us-east-2.amazonaws.com/wiki/miseqsopdata.zip
 ```
-#decompress the data
-```{bash}
+
+
+# \textcolor{red}{Décompréssion du dossier .zip}
+
+```{bash, results="hide"}
 unzip miseqsopdata.zip
 ```
+
