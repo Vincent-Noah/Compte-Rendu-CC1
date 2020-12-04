@@ -1,0 +1,301 @@
+---
+title: "Analyse des donées avec Dada2"
+author: Vincent Noah
+date: "28 novembre 2020"
+output:
+  github_document:
+    toc: true
+    toc_depth: 2
+---
+
+A partir des instructions https://benjjneb.github.io/dada2/tutorial.html
+
+# Préparation de l'environnement.
+
+On commence par charger le package dada2 pour pouvoir utiliser les fonctions lors de l'analyse.
+
+```{r}
+library(Rcpp)
+library(dada2)
+```
+
+
+Les données contenues dans Miseq_SOP sont des séquences d'ARN 16s à partir d'échantillons d'excréments de souris, obtenu par séquençage illumina. Miseq_SOP contient donc les forwards et les reverses. On va créer un objet path dans lequel on va mettre toutes les données de Miseq_SOP. On vérifie par la suite les fichiers contenus dans path avec la commande list.files
+
+```{r}
+path <- "~/MiSeq_SOP"
+list.files(path)
+```
+
+
+Une fois que l'on a observé et vérifié le contenu des fichiers dans path, on peut trier ces fichiers dans différents objets pour permettre l'analyse. On va donc créer l'objet fnFs qui contiendra tous les forwards, en indiquant à R de mettre tous les fichiers contenant le format _R1_001.fastq dans fnFs tout en gardant le nom entier des fichiers avec la commande full.name= TRUE. On réitère les mêmes opérations pour les Reverses (R2) avec l'objet fnRs. Afin de faciliter l'analyse et pour ne pas avoir des noms trop longs, on va "simplifier" les noms des fichiers fnFs avec la commande sapply en précisant à R que l'on veut enlever toutes les chaines de caractères (strsplit) après le "_", puis on va mettre ces noms simplifiés dans un nouvel objet appelé sample.name
+
+```{r}
+fnFs <- sort(list.files(path, pattern="_R1_001.fastq", full.names = TRUE))
+fnRs <- sort(list.files(path, pattern="_R2_001.fastq", full.names = TRUE))
+# Extract sample names, assuming filenames have format: SAMPLENAME_XXX.fastq
+sample.names <- sapply(strsplit(basename(fnFs), "_"), `[`, 1)
+```
+
+
+
+# Inspecter les profils de qualité des lectures.
+
+Une fois l'environnement préparé, on va maintenant inspecter les scores de qualité des FnFs, en traçant un graphique (plot) comprenant les fichiers fnFs 1 à 4. Ce graphique va nous permettre de visualiser les pertes significatives de qualité, et donc nous permettre de savoir sur quel nucléotide ou va pouvoir "couper" pour obtenir des séquences plus nettes. 
+
+
+* En gris on a la heat map (carte de fréquentation) qui représente la fréquence de chaque score de qualité à chaque position de base.
+
+* Le score de qualité moyen est indiqué en vert.
+
+* Le quartile de la distribution du score de qualité est indiqué en orange.
+
+* Globalement les scores de qualité des Forward rads sont plutôt bons. Cependant la qualité vers la fin. La baisse du score de qualité est un phénomène normal que l'on retrouve avec le séquençage illumina. On va donc éliminer les résultats à partir de la position 260.
+
+
+```{r}
+plotQualityProfile(fnFs[1:4])
+```
+
+* Ici c'est le même principe, sauf que l'on observe les scores de qualité des fichiers 1 à 4 des R2.
+
+
+
+* Les Reverse reads possède un score de qualité nettement inférieur par rapport au forward reads. C'est un phénomène courant lors du séquençage illumina. En effet, à la position 160 on observe une chute de la qualité. Il faudra donc éliminer les données à partir de la position 160.
+
+```{r}
+plotQualityProfile(fnRs[1:4])
+```
+
+
+# Filtration et tronquage.
+
+
+On commence par créer deux fichiers (filtFs et filrRs) où on va regrouper les fichiers fasq, une fois qu'ils seront filtrés, en utilisant les noms simplifiés. 
+
+```{r}
+filtFs <- file.path(path, "filtered", paste0(sample.names, "_F_filt.fastq.gz"))
+filtRs <- file.path(path, "filtered", paste0(sample.names, "_R_filt.fastq.gz"))
+names(filtFs) <- sample.names
+names(filtRs) <- sample.names
+```
+
+
+Afin de filtrer les données, on va utiliser une fonction de Dada2 "filterAndTrim". On va donc indiquer à R les fichiers concernés (fnFs, filFs, fnRs, filtRs) et indiquer ce que l'on veut tronquer, avec trunccLen=c(240,160). On va donc tronquer à partir de la position 240 (pb) pour les fnFs, et 160 pour les fnRs. Les autres paramètres sont des paramètres de filtration par défaut, autorisant le nombre d'erreurs maximale à 2. Pour voir le résultat on va utiliser head, qui va nous permettre de visualiser seulement le premier fichier de la liste, contrairement au print qui aurait tout affiché et aurait demandé beaucoup plus de ressources. R nous donnera le nombre de résultats avant et après filtration.
+
+```{r}
+out <- filterAndTrim(fnFs, filtFs, fnRs, filtRs, truncLen=c(240,160),
+              maxN=0, maxEE=c(2,2), truncQ=2, rm.phix=TRUE,
+              compress=TRUE, multithread=TRUE) # On Windows set multithread=FALSE
+head(out)
+```
+
+
+# Connaître le taux d'erreurs.
+
+Dada2 à partir de la fonction learnErrors calcul un modèle d'erreur. Pour cela Dada2 va utiliser nos données de nos séquences et en déduire s'il y a eu des erreurs dans la lecture des bases. Dans cette fonction learnErrors, on précise que l'on l'applique sur le fichier filtFs, et l'argument multithread=TRUE permet d'exécuter plusieurs tâches efficacement. Ici on a le modèle basé sur 139642 lectures issues de 20 échantillons.
+
+```{r}
+errF <- learnErrors(filtFs, multithread=TRUE)
+```
+
+On réitère la même opération pour les Reverse.
+
+```{r}
+errR <- learnErrors(filtRs, multithread=TRUE)
+```
+
+On peut maintenant visualiser le taux d'erreurs estimés (ici des forward) en rentrant la fonction plotErrors. Si on prend l'exemple de A2T, cela montre le taux d'erreur de A en T.
+
+
+
+* La ligne noire montre le taux d'erreurs estimé avec learnErrors.
+
+
+
+* La ligne en rouge montre le taux d'erreur observé.
+
+
+
+* On observe qu'il y a peu de différence.
+
+```{r}
+plotErrors(errF, nominalQ=TRUE)
+```
+
+
+# Inférence d'échantillon 
+
+Le package Dada2 contient un algorithme d'interférence aux données que nous venons juste de filtrer et de tronquer. Cela nous permet d'enlever les bruits de fond, pour les R1 et les R2.
+
+```{r}
+dadaFs <- dada(filtFs, err=errF, multithread=TRUE)
+```
+ 
+
+
+```{r}
+dadaRs <- dada(filtRs, err=errR, multithread=TRUE)
+```
+
+
+
+Permet d'inspecter ce qu'il y a dans la première "case" de l'objet dadaFs.
+
+
+```{r}
+dadaFs[[1]]
+```
+
+
+
+# Alignement des R1 et R2 en contigs
+
+Grâce à la fonction mergerPair, on va pouvoir maintenant aligner les R1 et R2 pour former des contigs. Dans les arguments de cette fonction on précise que l'on utilise les fichiers filtrés et tronqués. On va stoquer ces données dans un nouvel objet mergers. La sortie, nous montre les séquences qui ont pu être alignées en contigs par rapport à l'ensemble des séquences.
+
+```{r,}
+mergers <- mergePairs(dadaFs, filtFs, dadaRs, filtRs, verbose=TRUE)
+# Inspect the merger data.frame from the first sample
+head(mergers[[1]])
+```
+
+
+# Construction de la table d'observation
+
+On va maintenant créer une table de séquences grâce à la fonction "makeSequenceTable" à partir des contigs obtenus est placé dans l'objet mergers.
+
+```{r,}
+seqtab <- makeSequenceTable(mergers)
+dim(seqtab)
+```
+
+# Distribution des longeurs de séquences 
+
+On peut maintenant savoir la taille de nos séquences. On va préciser à R avec "getSequences" de sélectionner les séquences de contenu dans seqtab. L'argument nchar, nous permet de connaitre la taille de chaque séquence. Par exemple, ici on retrouve 1 séquence unique d'une longueur de 251 pb.
+
+```{r}
+# Inspect distribution of sequence lengths
+table(nchar(getSequences(seqtab)))
+```
+
+# Détection de chimères
+
+Pour une meilleure analyse, il faut détecter et supprimer les chimères. Ce sont des chevauchements qui vont fausser les lectures. Avec la fonction removeBimeraDenovo, on va enlever ces chevauchements dans seqtabs. Une fois les chimères enlevées, on va stoquer les données dans un nouvel objet seqtab.nochim 
+
+dim (seqtab.nochim) nous permet de donner la dimention de seqtab.nochim
+
+* On observe qu'il y a eu 61 chimères retirées sur 293 séquences.
+
+```{r}
+seqtab.nochim <- removeBimeraDenovo(seqtab, method="consensus", multithread=TRUE, verbose=TRUE)
+dim(seqtab.nochim)
+```
+
+# Pourcentage de séquences chimérique dans l'ensemble de la table
+
+On peut déterminer le pourcentage du taux de chimères. Cela est plus représentatif. Pour cela on va diviser la somme (sum) des séquences contenues dans seqtab.nochim (sans chimère) et la somme des seqtab (avec chimères). On retranche 1 au résultat ce qui va nous permettre de connaitre le pourcentage de séquences chimériques. On trouve qu'il y a 3.5% de séquences chimérique dans notre jeu de donnée.
+
+```{r}
+1-sum(seqtab.nochim)/sum(seqtab)
+```
+
+
+
+# Suivre le nombre de séquences enlevées à chaque étape de bioinformatique.
+
+On peut suivre l'évolution du nombre de séquences, dans les différents échantillons au fur et à mesure de nos différentes interventions comme le filtrage ou le tronquage.
+
+* La fonctions getUnique permet d'extraire des séquences uniques des jeu de données voulus. Cette fonction est associé à getN. 
+
+* On applique cette fonction à dadaFs, dadaRs, mergers et seqtab.nochim
+
+* Out nous permet d'avoir que les sorties.
+
+
+```{r}
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+print(track)
+getN <- function(x) sum(getUniques(x))
+track <- cbind(out, sapply(dadaFs, getN), sapply(dadaRs, getN), sapply(mergers, getN), rowSums(seqtab.nochim))
+# If processing a single sample, remove the sapply calls: e.g. replace sapply(dadaFs, getN) with getN(dadaFs)
+colnames(track) <- c("input", "filtered", "denoisedF", "denoisedR", "merged", "nonchim")
+rownames(track) <- sample.names
+head(track)
+```
+
+
+# Téléchargement des bases de donées et assignation d'un taxonomique.
+
+De par le bash, on peut télécharger directement des données à partir d'un lien,avec wget. ici il sagit de données (silva_nr99_v138_train_set.fa.gz ) qui permettre d'attribuer des taxons, afin de determiner la diversité présente dans nos échantillons.
+
+```{bash, results="hide"}
+wget https://zenodo.org/record/3986799/files/silva_nr99_v138_train_set.fa.gz
+```
+
+On peut donc ensuite grâce a la fonction de Dada2 "assignTaxonomy()" assigner des taxons, en précisant à R que, dans un nouvel objet "taxa", et à partir des séquences de seqtab.nochim, d'assigner des taxons.
+
+```{r}
+taxa <- assignTaxonomy(seqtab.nochim, "~/silva_nr99_v138_train_set.fa.gz", multithread=TRUE)
+```
+
+On peut maintenant observer nos résultats.
+
+```{r}
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+
+On réitère la même opération. La différence cette fois-ci c'est que l'on télécharge des données pour l'assignation taxonomique, qui permettent d'avoir en plus le nom des espèces. Cela nous donne donc une information supplémentaire.
+
+```{bash, results="hide"}
+wget https://zenodo.org/record/3986799/files/silva_species_assignment_v138.fa.gz
+```
+
+
+```{r}
+taxa <- addSpecies(taxa, "~/silva_species_assignment_v138.fa.gz")
+```
+
+
+
+```{r}
+taxa.print <- taxa # Removing sequence rownames for display only
+rownames(taxa.print) <- NULL
+head(taxa.print)
+```
+
+
+#Evaluation de la précision
+
+* Mock est une communauté qui contient 20 souches connues déjà séquencées. C'est donc un témoin.
+
+* Cette étape nous permet de vérifier l'exactitude des étapes appliqué par Dada2 sur nos échantillons, pour déterminer s'il existe un taux d'erreurs.
+
+* Pour cela, on va vérifier si Dada2 peut retrouver le nombre de souches contenue dans la communauté mock. On retrouve bien 20.
+
+
+```{r}
+unqs.mock <- seqtab.nochim["Mock",]
+unqs.mock <- sort(unqs.mock[unqs.mock>0], decreasing=TRUE) # Drop ASVs absent in the Mock
+cat("DADA2 inferred", length(unqs.mock), "sample sequences present in the Mock community.\n")
+```
+* On recompare aux données que Dada2 était supposé trouver en allant les récupérer dans le fichier HMP_MOCK.v35.fasta. On retrouve bien 20.
+
+```{r}
+mock.ref <- getSequences(file.path(path, "HMP_MOCK.v35.fasta"))
+match.ref <- sum(sapply(names(unqs.mock), function(x) any(grepl(x, mock.ref))))
+cat("Of those,", sum(match.ref), "were exact matches to the expected reference sequences.\n")
+```
+
+Afin de pouvoir continuer notre analyse avec phyloseq, On va réaliser une sauvegarde, que l'on pourra charger avant l'analyse de phyloseq afin d'avoir toutes les données.
+
+```{r}
+save.image(file="02_data-analysis-with-DADA2_FinalEnv")
+```
+
+
